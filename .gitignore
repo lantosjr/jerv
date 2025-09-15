@@ -1,0 +1,14 @@
+/venv
+__pycache__/
+*.pyc
+*.sqlite3
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
+/media/
+/staticfiles/
+*.log
+Dockerfile*
+docker-compose*.yml

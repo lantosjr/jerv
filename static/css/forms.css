@@ -1,0 +1,54 @@
+/* Shared form styles for JERV ERP */
+.product-form { width: 100%; }
+.product-form .form-grid { display: flex; flex-direction: column; gap: 1rem; }
+.product-form .form-row { display: flex; flex-direction: column; }
+.product-form input[type="text"],
+.product-form input[type="number"],
+.product-form textarea,
+.product-form select,
+.product-form .form-control { 
+    border: none !important; 
+    border-bottom: 1px solid #e0e0e0 !important; 
+    border-radius: 0 !important; 
+    padding: 6px 8px !important; 
+    background: transparent !important; 
+}
+.product-form .form-control-plaintext { 
+    border: none !important; 
+    background: transparent !important; 
+    padding: 6px 8px !important; 
+    width: 100%;
+}
+.img-preview { width: 100px !important; height: 100px !important; object-fit: cover !important; border-radius:4px !important; }
+.image-preview { display: inline-flex; flex-direction: column; gap: 0.25rem; align-items:center; }
+.image-actions { display:flex; gap:0.5rem; }
+.image-preview .btn { padding: .25rem .4rem; }
+.product-form .input-group { border: none !important; box-shadow: none !important; }
+.product-form .form-label { font-weight: 600; margin-bottom: 0.25rem; }
+
+/* Ensure card bodies used for forms don't show borders on inputs */
+.card .form-control { border: none !important; border-bottom: 1px solid #e0e0e0 !important; background: transparent !important; }
+
+/* Prevent uploaded/legacy images from breaking layout by forcing max dimensions */
+img[src][class*="img-thumbnail"], .image-preview img, .img-preview {
+    max-width: 120px !important;
+    max-height: 120px !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: cover !important;
+}
+
+/* Enforce underline-only styling for all form controls used in product forms */
+.form-control, .product-form .form-control {
+    border: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Make sure file inputs don't expand the layout */
+input[type="file"] { max-width: 100% !important; }
+@media (min-width: 768px) {
+    .price-section { display:flex; }
+}

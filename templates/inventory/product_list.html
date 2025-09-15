@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Termékek - Inventory{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-boxes"></i> Termékek</h1>
+            <a href="{% url 'inventory:product_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Új termék
+            </a>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="mb-4">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <label for="q" class="form-label">Keresés</label>
+                    <input type="text" class="form-control" id="q" name="q"
+                           value="{{ query }}" placeholder="Termék neve, cikkszám...">
+                </div>
+                <div class="col-md-4">
+                    <label for="category" class="form-label">Kategória</label>
+                    <select class="form-select" id="category" name="category">
+                        <option value="">Összes kategória</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category.id|stringformat:"s" == selected_category %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-search"></i> Keresés
+                    </button>
+                    <a href="{% url 'inventory:product_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Low Stock Alert -->
+        {% comment %} Removed low stock alert, now in warnings page {% endcomment %}
+
+        <!-- Products Table -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Cikkszám</th>
+                        <th>Név</th>
+                        <th>Kategória</th>
+                        <th>Ár</th>
+                        <th>Készlet</th>
+                        <th>Státusz</th>
+                        <th>Műveletek</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td><code>{{ product.sku }}</code></td>
+                        <td>
+                            <a href="{% url 'inventory:product_detail' product.pk %}">
+                                {{ product.name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if product.category %}
+                                {{ product.category.name }}
+                            {% else %}
+                                <span class="text-muted">Nincs</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ product.brutto_price|floatformat:2 }} Ft</td>
+                        <td>
+                            <span class="{% if product.is_low_stock %}text-warning{% endif %}">
+                                {{ product.stock_quantity }} db
+                            </span>
+                            {% if product.min_stock_level > 0 %}
+                                <small class="text-muted">(min: {{ product.min_stock_level }})</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.stock_quantity == 0 %}
+                                <span class="badge bg-danger">Kifogyott</span>
+                            {% elif product.is_low_stock %}
+                                <span class="badge bg-warning">Alacsony</span>
+                            {% else %}
+                                <span class="badge bg-success">Elérhető</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'inventory:product_detail' product.pk %}" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'inventory:product_update' product.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'inventory:product_delete' product.pk %}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            Nincs termék az adatbázisban.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

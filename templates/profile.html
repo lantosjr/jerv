@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Profil - {{ user.get_full_name|default:user.username }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title mb-0">Felhasználói profil</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Alapadatok</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Felhasználónév:</strong></td>
+                                <td>{{ user.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ user.email }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Vezetéknév:</strong></td>
+                                <td>{{ user.last_name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Keresztnév:</strong></td>
+                                <td>{{ user.first_name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Teljes név:</strong></td>
+                                <td>{{ user.get_full_name|default:"Nincs megadva" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Jogosultságok</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Aktív:</strong></td>
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success">Igen</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Nem</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Szuperuser:</strong></td>
+                                <td>
+                                    {% if user.is_superuser %}
+                                        <span class="badge bg-warning">Igen</span>
+                                    {% else %}
+                                        Nem
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Staff:</strong></td>
+                                <td>
+                                    {% if user.is_staff %}
+                                        <span class="badge bg-info">Igen</span>
+                                    {% else %}
+                                        Nem
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Csoportok:</strong></td>
+                                <td>
+                                    {% for group in user.groups.all %}
+                                        <span class="badge bg-secondary">{{ group.name }}</span>
+                                    {% empty %}
+                                        Nincs csoport
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Fiók információk</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Regisztráció dátuma:</strong></td>
+                                <td>{{ user.date_joined|date:"Y. m. d. H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Utolsó bejelentkezés:</strong></td>
+                                <td>
+                                    {% if user.last_login %}
+                                        {{ user.last_login|date:"Y. m. d. H:i" }}
+                                    {% else %}
+                                        Soha
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <a href="{% url 'accounts:password_change' %}" class="btn btn-primary">
+                        Jelszó megváltoztatása
+                    </a>
+                    <a href="{% url 'admin:index' %}" class="btn btn-secondary">
+                        Admin felület
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - Termék részletek{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Termékadatok teljes szélességben -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="mb-0">
+                    <i class="fas fa-box"></i> {{ product.name }}
+                </h2>
+                <!-- actions moved to bottom -->
+            </div>
+
+            <!-- Termék képek -->
+            {% if product.images.exists %}
+            <div class="row mb-3">
+                <div class="col-12">
+                    <h5>Termék képek</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                    {% for image in product.images.all %}
+                    <img src="{{ image.image.url }}" alt="Termék kép {{ forloop.counter }}" 
+                        class="img-thumbnail img-preview" style="width:120px;height:120px;object-fit:cover;cursor:pointer;" 
+                        onclick="showImageModal('{{ image.image.url }}', '{{ product.name }} kép {{ forloop.counter }}')">
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>Alapadatok</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Név:</strong></td>
+                            <td>{{ product.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cikkszám:</strong></td>
+                            <td><code>{{ product.sku }}</code></td>
+                        </tr>
+                        {% if product.ean13 %}
+                        <tr>
+                            <td><strong>EAN-13:</strong></td>
+                            <td><code>{{ product.ean13 }}</code></td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td><strong>Leírás:</strong></td>
+                            <td>{{ product.description|default:"Nincs leírás" }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-4">
+                    <h5>Árazás</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Nettó ár:</strong></td>
+                            <td>{{ product.net_price|floatformat:2 }} Ft</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ÁFA kulcs:</strong></td>
+                            <td>{{ product.vat_rate|floatformat:2 }}%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bruttó ár:</strong></td>
+                            <td><strong>{{ product.brutto_price|floatformat:2 }} Ft</strong></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-4">
+                    <h5>Készlet információ</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Aktuális készlet:</strong></td>
+                            <td>
+                                <span class="{% if product.is_low_stock %}text-warning fw-bold{% endif %}">
+                                    {{ product.stock_quantity }} db
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Minimum szint:</strong></td>
+                            <td>{{ product.min_stock_level }} db</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Státusz:</strong></td>
+                            <td>
+                                {% if product.stock_quantity == 0 %}
+                                    <span class="badge bg-danger">Kifogyott</span>
+                                {% elif product.is_low_stock %}
+                                    <span class="badge bg-warning">Alacsony készlet</span>
+                                {% else %}
+                                    <span class="badge bg-success">Elérhető</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Kategorizálás</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Kategória:</strong></td>
+                            <td>
+                                {% if product.category %}
+                                    {{ product.category.name }}
+                                {% else %}
+                                    <span class="text-muted">Nincs kategorizálva</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Szállító:</strong></td>
+                            <td>
+                                {% if product.supplier %}
+                                    {{ product.supplier.name }}
+                                {% else %}
+                                    <span class="text-muted">Nincs szállító</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <h5>Időbélyegek</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Létrehozva:</strong></td>
+                            <td>{{ product.created_at|date:"Y. m. d. H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Módosítva:</strong></td>
+                            <td>{{ product.updated_at|date:"Y. m. d. H:i" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legutóbbi készletmozgások -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <h5>Legutóbbi készletmozgások</h5>
+            <div class="list-group">
+                {% for movement in stock_movements %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <div><small class="text-muted">{{ movement.created_at|date:"Y. m. d. H:i" }}</small></div>
+                        <div>
+                            <strong>
+                                {% if movement.movement_type == 'IN' %}
+                                    <span class="text-success">Beérkezés</span>
+                                {% elif movement.movement_type == 'OUT' %}
+                                    <span class="text-danger">Kivétel</span>
+                                {% else %}
+                                    <span class="text-warning">Korrekció</span>
+                                {% endif %}
+                            </strong>
+                            &nbsp;
+                            <span>{{ movement.quantity }} db</span>
+                        </div>
+                        <div class="text-muted small">{{ movement.reason|default:"-" }}</div>
+                    </div>
+                    <div class="text-end">
+                        <div><a href="{% url 'inventory:product_detail' movement.product.pk %}">{{ movement.product.name }}</a></div>
+                        <div class="small text-muted">
+                            {% if movement.created_by %}
+                                {{ movement.created_by.get_full_name|default:movement.created_by.username }}
+                            {% else %}
+                                Ismeretlen
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="list-group-item text-muted">Nincsenek készletmozgások ehhez a termékhez.</div>
+                {% endfor %}
+            </div>
+            <div class="mt-2">
+                <a href="{% url 'inventory:stock_movement_list' %}" class="btn btn-sm btn-outline-secondary">
+                    Összes mozgás
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Vissza a termékekhez
+            </a>
+
+            <form method="post" action="{% url 'inventory:add_to_order' product.pk %}" style="display:inline-block;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-shopping-cart"></i> Rendeléshez adás
+                </button>
+            </form>
+
+            <a href="{% url 'inventory:product_update' product.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Szerkesztés
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Kép modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showImageModal(imageUrl, title) {
+    document.getElementById('modalImage').src = imageUrl;
+    document.getElementById('imageModalLabel').textContent = title;
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

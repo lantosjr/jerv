@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-body px-0">
+                <form method="post" enctype="multipart/form-data" class="product-form">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <label class="form-label">{{ form.name.label }}</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">{{ form.sku.label }}</label>
+                            {{ form.sku }}
+                            {% if form.sku.errors %}<div class="text-danger small">{{ form.sku.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">{{ form.ean13.label }}</label>
+                            {{ form.ean13 }}
+                            {% if form.ean13.errors %}<div class="text-danger small">{{ form.ean13.errors.0 }}</div>{% endif %}
+                            <div class="form-text">Opcionális, 13 számjegy</div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">{{ form.image.label }}</label>
+                            {{ form.image }}
+                            {% if form.image.errors %}<div class="text-danger small">{{ form.image.errors.0 }}</div>{% endif %}
+                            <div class="form-text">Max. 5MB, opcionális</div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Képfeltöltési mezők -->
+                    <div class="mb-3">
+                        <label class="form-label">Termék képek (max. 5 kép)</label>
+                        <div id="image-upload-container" class="d-flex flex-row flex-wrap gap-2 align-items-start">
+                            {% if form.instance.pk %}
+                                {% for image in form.instance.images.all %}
+                                    <div class="image-preview" data-image-id="{{ image.id }}">
+                                        <img src="{{ image.image.url }}" alt="Termék kép" class="img-preview img-thumbnail" style="width:120px;height:120px;object-fit:cover;">
+                                        <div class="image-actions">
+                                            <button type="button" class="btn btn-sm btn-danger remove-existing-image" data-image-id="{{ image.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            <input type="hidden" name="delete_images" value="{{ image.id }}" disabled data-image-id="{{ image.id }}">
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            <div id="image-inputs" class="w-100">
+                                <div class="input-group mb-2">
+                                    <input type="file" name="images" class="form-control" accept="image/*" multiple>
+                                    <button type="button" class="btn btn-outline-secondary" id="add-image-input">
+                                        <i class="fas fa-plus"></i> További kép
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text">Max. 5 kép, egyenként max. 5MB. Támogatott formátumok: JPG, PNG, GIF</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Ár bevitel típusa</label>
+                                <div class="mb-2">
+                                    {{ form.price_input_type }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.vat_rate.id_for_label }}" class="form-label">
+                                    {{ form.vat_rate.label }}
+                                </label>
+                                <div class="input-group">
+                                    {{ form.vat_rate }}
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                {% if form.vat_rate.errors %}
+                                    <div class="text-danger small">{{ form.vat_rate.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="price-section price-net d-flex gap-3">
+                        <div class="flex-fill">
+                            <label class="form-label">{{ form.net_price.label }}</label>
+                            <div class="d-flex align-items-center">
+                                {{ form.net_price }}
+                                <span class="ms-2">Ft</span>
+                            </div>
+                            {% if form.net_price.errors %}<div class="text-danger small">{{ form.net_price.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="flex-fill">
+                            <label class="form-label">Számított bruttó ár</label>
+                            <input type="text" class="form-control-plaintext" id="calculated_brutto" readonly>
+                        </div>
+                    </div>
+
+                    <div class="price-section price-gross d-flex gap-3" style="display:none;">
+                        <div class="flex-fill">
+                            <label class="form-label">{{ form.gross_price.label }}</label>
+                            <div class="d-flex align-items-center">
+                                {{ form.gross_price }}
+                                <span class="ms-2">Ft</span>
+                            </div>
+                            {% if form.gross_price.errors %}<div class="text-danger small">{{ form.gross_price.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="flex-fill">
+                            <label class="form-label">Számított nettó ár</label>
+                            <input type="text" class="form-control-plaintext" id="calculated_net" readonly>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.stock_quantity.id_for_label }}" class="form-label">
+                                    {{ form.stock_quantity.label }}
+                                </label>
+                                <div class="input-group">
+                                    {{ form.stock_quantity }}
+                                    <span class="input-group-text">db</span>
+                                </div>
+                                {% if form.stock_quantity.errors %}
+                                    <div class="text-danger small">{{ form.stock_quantity.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.min_stock_level.id_for_label }}" class="form-label">
+                                    {{ form.min_stock_level.label }}
+                                </label>
+                                <div class="input-group">
+                                    {{ form.min_stock_level }}
+                                    <span class="input-group-text">db</span>
+                                </div>
+                                {% if form.min_stock_level.errors %}
+                                    <div class="text-danger small">{{ form.min_stock_level.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    {{ form.category.label }}
+                                </label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.supplier.id_for_label }}" class="form-label">
+                                    {{ form.supplier.label }}
+                                </label>
+                                {{ form.supplier }}
+                                {% if form.supplier.errors %}
+                                    <div class="text-danger small">{{ form.supplier.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Mentés
+                        </button>
+                        <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Mégse
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const priceInputTypeRadios = document.querySelectorAll('[name="price_input_type"]');
+    const priceNetSection = document.querySelector('.price-net');
+    const priceGrossSection = document.querySelector('.price-gross');
+    const netPriceInput = document.querySelector('input[name="net_price"]');
+    const grossPriceInput = document.querySelector('input[name="gross_price"]');
+    const vatRateInput = document.querySelector('input[name="vat_rate"]');
+    const calculatedBrutto = document.getElementById('calculated_brutto');
+    const calculatedNet = document.getElementById('calculated_net');
+
+    function updatePriceVisibility() {
+        const selectedType = document.querySelector('[name="price_input_type"]:checked')?.value || 'net';
+        if (selectedType === 'net') {
+            if (priceNetSection) priceNetSection.style.display = 'flex';
+            if (priceGrossSection) priceGrossSection.style.display = 'none';
+            // Disable gross_price input so it's not submitted
+            if (grossPriceInput) grossPriceInput.disabled = true;
+            if (netPriceInput) netPriceInput.disabled = false;
+        } else if (selectedType === 'gross') {
+            if (priceNetSection) priceNetSection.style.display = 'none';
+            if (priceGrossSection) priceGrossSection.style.display = 'flex';
+            // Disable net_price input so it's not submitted
+            if (netPriceInput) netPriceInput.disabled = true;
+            if (grossPriceInput) grossPriceInput.disabled = false;
+        }
+    }
+
+    function calculatePrices() {
+        if (!vatRateInput) return;
+        
+        const vatRate = parseFloat(vatRateInput.value) || 0;
+        const vatMultiplier = 1 + (vatRate / 100);
+        const selectedType = document.querySelector('[name="price_input_type"]:checked')?.value || 'net';
+
+        if (selectedType === 'net' && netPriceInput && netPriceInput.value && calculatedBrutto) {
+            const netPrice = parseFloat(netPriceInput.value) || 0;
+            const bruttoPrice = netPrice * vatMultiplier;
+            calculatedBrutto.value = bruttoPrice.toFixed(2);
+        } else if (selectedType === 'gross' && grossPriceInput && grossPriceInput.value && calculatedNet) {
+            const grossPrice = parseFloat(grossPriceInput.value) || 0;
+            const netPrice = grossPrice / vatMultiplier;
+            calculatedNet.value = netPrice.toFixed(2);
+        }
+    }
+
+    // Radio button-ok eseménykezelése
+    priceInputTypeRadios.forEach(radio => {
+        radio.addEventListener('change', updatePriceVisibility);
+    });
+    if (netPriceInput) netPriceInput.addEventListener('input', calculatePrices);
+    if (grossPriceInput) grossPriceInput.addEventListener('input', calculatePrices);
+    if (vatRateInput) vatRateInput.addEventListener('input', calculatePrices);
+
+    // Képfeltöltés kezelése
+    const addImageInputBtn = document.getElementById('add-image-input');
+    const imageInputsContainer = document.getElementById('image-inputs');
+
+    addImageInputBtn.addEventListener('click', function() {
+        const currentInputs = imageInputsContainer.querySelectorAll('input[type="file"]').length;
+        if (currentInputs < 5) {
+            const inputIndex = currentInputs + 1;
+            const newInputGroup = document.createElement('div');
+            newInputGroup.className = 'input-group mb-2';
+            newInputGroup.innerHTML = `
+                <input type="file" name="images" class="form-control" accept="image/*" multiple>
+                <button type="button" class="btn btn-outline-danger remove-image-input">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            imageInputsContainer.appendChild(newInputGroup);
+        }
+    });
+
+    // Kép törlése
+    document.addEventListener('click', function(e) {
+        // Remove dynamically added file input
+        if (e.target.classList.contains('remove-image-input')) {
+            e.target.closest('.input-group').remove();
+            return;
+        }
+
+        // Handle remove existing image clicks; allow clicks on child elements (icon)
+        const removeBtn = e.target.closest && e.target.closest('.remove-existing-image');
+        if (removeBtn) {
+            const imageId = removeBtn.dataset.imageId;
+            // Prefer to find the disabled hidden input and enable it; if missing, append one
+            let hiddenInput = document.querySelector(`input[name="delete_images"][data-image-id="${imageId}"]`);
+            if (hiddenInput) {
+                hiddenInput.disabled = false;
+            } else {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'delete_images';
+                hiddenInput.value = imageId;
+            }
+
+            // Append the hidden input to the form so it's submitted
+            const form = removeBtn.closest('form');
+            if (form && !form.contains(hiddenInput)) {
+                form.appendChild(hiddenInput);
+            }
+
+            const preview = removeBtn.closest('.image-preview');
+            if (preview) preview.remove();
+            return;
+        }
+    });
+
+    // Inicializálás
+    updatePriceVisibility();
+    calculatePrices();
+});
+</script>
+<!-- form styles moved to static/css/forms.css -->
+{% endblock %}
